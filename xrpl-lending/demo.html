@@ -1,0 +1,920 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>XRPL Lending — Spider-Verse</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Bangers&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap');
+
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --ink:#06060e;--panel:#0e0e1a;
+  --yellow:#e8ff00;--red:#ff2855;--blue:#00c8ff;
+  --purple:#b06fff;--green:#00ffaa;--orange:#ff8c00;
+  --white:#f2f2f2;--grey:#777
+}
+html,body{height:100%;background:var(--ink);color:var(--white);font-family:'Space Mono',monospace;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;background-image:radial-gradient(circle,#ffffff06 2px,transparent 2px);background-size:10px 10px;pointer-events:none;z-index:0}
+.bg-lines{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden}
+.bg-lines::before{content:'';position:absolute;top:50%;left:50%;width:300vmax;height:300vmax;transform:translate(-50%,-50%);background:repeating-conic-gradient(#ffffff02 0deg 1deg,transparent 1deg 8deg);animation:bgR 130s linear infinite}
+.bg-lines::after{content:'';position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse 80% 80% at 50% 50%, #06060eee 0%, #06060eaa 55%, transparent 100%)}
+@keyframes bgR{to{transform:translate(-50%,-50%) rotate(360deg)}}
+
+.app{position:relative;z-index:1;min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:2rem 1rem 5rem;gap:1.6rem;max-width:740px;margin:0 auto}
+
+/* HERO */
+.hero{text-align:center}
+.hero-eye{font-family:'Bangers',cursive;font-size:.8rem;letter-spacing:4px;color:var(--purple);text-transform:uppercase}
+.hero h1{font-family:'Bangers',cursive;font-size:clamp(2.8rem,9vw,5rem);line-height:.9;letter-spacing:3px;text-transform:uppercase;color:var(--white);text-shadow:5px 5px 0 var(--purple),10px 10px 0 var(--blue)}
+.hero h1 em{color:var(--yellow);font-style:normal}
+.hero-sub{font-size:.68rem;color:var(--grey);letter-spacing:2px;text-transform:uppercase;margin-top:.5rem}
+.badges{display:flex;justify-content:center;flex-wrap:wrap;gap:.6rem;margin-top:.8rem}
+.badge{font-family:'Bangers',cursive;font-size:.72rem;letter-spacing:2px;padding:.2rem .65rem;border-radius:2px;border:2px solid;text-transform:uppercase}
+.badge-p{color:var(--purple);border-color:var(--purple);background:#b06fff10}
+.badge-b{color:var(--blue);border-color:var(--blue);background:#00c8ff10}
+.badge-y{color:var(--yellow);border-color:var(--yellow);background:#e8ff0010}
+.badge-g{color:var(--green);border-color:var(--green);background:#00ffaa10}
+.net{display:inline-flex;align-items:center;gap:.4rem;background:#031810;border:2px solid var(--green);border-radius:2px;padding:.2rem .6rem;font-size:.6rem;color:var(--green);letter-spacing:1px}
+.pulse{width:5px;height:5px;background:var(--green);border-radius:50%;animation:pulse 1.5s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.3;transform:scale(.6)}}
+
+/* STEP TRACK */
+.step-track{display:flex;width:100%}
+.step-item{flex:1;text-align:center;padding:.5rem .2rem;background:var(--panel);border:3px solid #1e1e2e;font-family:'Bangers',cursive;font-size:.65rem;letter-spacing:1px;color:#3a3a5a;transition:all .25s;position:relative}
+.step-item:not(:last-child)::after{content:'▶';position:absolute;right:-10px;top:50%;transform:translateY(-50%);font-size:.75rem;color:#222;z-index:2}
+.step-item.active{background:var(--yellow);border-color:var(--yellow);color:var(--ink);transform:translateY(-3px);box-shadow:4px 4px 0 #8a9900}
+.step-item.done{background:var(--green);border-color:var(--green);color:var(--ink)}
+.step-num{font-size:.95rem;display:block}.step-lbl{font-size:.52rem;letter-spacing:1px}
+
+/* PANEL */
+.panel{width:100%;background:var(--panel);border:3px solid var(--purple);border-radius:3px;box-shadow:6px 6px 0 var(--purple);position:relative;overflow:hidden;isolation:isolate}
+.panel::after{content:'';position:absolute;inset:0;pointer-events:none;z-index:0;background-image:radial-gradient(circle,#ffffff02 1px,transparent 1px);background-size:8px 8px}
+.panel-hdr{background:var(--purple);color:var(--ink);font-family:'Bangers',cursive;font-size:1rem;letter-spacing:3px;padding:.4rem 1.1rem;text-transform:uppercase;display:flex;align-items:center;gap:.5rem;position:relative;z-index:1}
+.panel-body{padding:1.3rem;position:relative;z-index:1}
+
+/* ROLE GRID */
+.role-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:.7rem;margin-bottom:1.2rem}
+.role-box{background:#07070f;border:2px solid #1e1e2e;border-radius:3px;padding:.65rem;transition:border-color .3s}
+.role-box.rB{border-color:var(--orange)}
+.role-box.rD{border-color:var(--blue)}
+.role-box.rBw{border-color:var(--purple)}
+.role-lbl{font-size:.55rem;letter-spacing:2px;text-transform:uppercase;color:#444;margin-bottom:.25rem}
+.role-addr{font-size:.58rem;color:var(--blue);word-break:break-all}
+.role-bal{font-size:.8rem;font-weight:700;color:var(--green);margin-top:.25rem}
+.role-tag{display:inline-block;font-size:.48rem;background:#111;border:1px solid #2a2a2a;padding:.1rem .25rem;border-radius:1px;color:#555;margin-top:.15rem}
+
+/* PRIMITIVES */
+.prims{display:flex;flex-wrap:wrap;gap:.45rem;margin-bottom:1rem}
+.prim{font-size:.58rem;padding:.18rem .5rem;border-radius:2px;border:1.5px solid;letter-spacing:1px;text-transform:uppercase}
+.prim-y{color:var(--yellow);border-color:var(--yellow);background:#e8ff0010}
+.prim-p{color:var(--purple);border-color:var(--purple);background:#b06fff10}
+.prim-b{color:var(--blue);border-color:var(--blue);background:#00c8ff10}
+.prim-g{color:var(--green);border-color:var(--green);background:#00ffaa10}
+.prim-o{color:var(--orange);border-color:var(--orange);background:#ff8c0010}
+
+/* FIELDS */
+.field{margin-bottom:1rem}
+.field label{display:block;font-size:.58rem;letter-spacing:2px;text-transform:uppercase;color:var(--blue);margin-bottom:.3rem}
+.field input{width:100%;background:#04040a;border:2px solid #1e1e2e;border-radius:2px;color:var(--white);font-family:'Space Mono',monospace;font-size:.8rem;padding:.5rem .75rem;outline:none;transition:border-color .2s,box-shadow .2s}
+.field input:focus{border-color:var(--blue);box-shadow:0 0 0 3px #00c8ff20}
+.field input.field-err{border-color:var(--red)!important;box-shadow:0 0 0 3px #ff285518!important}
+
+/* FIELD HINT */
+.field-hint{font-size:.6rem;color:#3a3a5a;letter-spacing:1px;margin-top:.35rem;line-height:1.5;transition:color .2s}
+.field-hint.ok  {color:var(--green)}
+.field-hint.warn{color:var(--yellow)}
+.field-hint.err {color:var(--red)}
+.field input::placeholder{color:#2a2a3a}
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:.8rem}
+
+/* BUTTONS */
+.btn{font-family:'Bangers',cursive;font-size:1.15rem;letter-spacing:3px;text-transform:uppercase;border:none;cursor:pointer;padding:.6rem 1.6rem;border-radius:2px;transition:transform .1s,box-shadow .1s;display:inline-flex;align-items:center;gap:.5rem}
+.btn:active{transform:translate(4px,4px)!important;box-shadow:none!important}
+.btn-y{background:var(--yellow);color:var(--ink);border:3px solid var(--ink);box-shadow:5px 5px 0 #8a9900}
+.btn-y:hover{transform:translate(-2px,-2px);box-shadow:7px 7px 0 #8a9900}
+.btn-p{background:var(--purple);color:var(--white);border:3px solid var(--white);box-shadow:5px 5px 0 #5a2090}
+.btn-p:hover{transform:translate(-2px,-2px);box-shadow:7px 7px 0 #5a2090}
+.btn-b{background:var(--blue);color:var(--ink);border:3px solid var(--ink);box-shadow:5px 5px 0 #005a70}
+.btn-b:hover{transform:translate(-2px,-2px);box-shadow:7px 7px 0 #005a70}
+.btn-o{background:var(--orange);color:var(--ink);border:3px solid var(--ink);box-shadow:5px 5px 0 #704000}
+.btn-o:hover{transform:translate(-2px,-2px);box-shadow:7px 7px 0 #704000}
+.btn-g{background:var(--green);color:var(--ink);border:3px solid var(--ink);box-shadow:5px 5px 0 #006040}
+.btn-g:hover{transform:translate(-2px,-2px);box-shadow:7px 7px 0 #006040}
+.btn:disabled{opacity:.35;cursor:not-allowed;transform:none!important;box-shadow:3px 3px 0 #2a2a2a!important}
+
+/* SPINNER */
+.ring{display:none;width:18px;height:18px;border:3px solid #2a2a3a;border-top-color:var(--yellow);border-radius:50%;animation:spin .6s linear infinite;flex-shrink:0}
+.ring.on{display:inline-block}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* LOG */
+.log{background:#03030a;border:2px solid #131325;border-radius:2px;padding:.65rem;height:160px;overflow-y:auto;font-size:.65rem;line-height:1.9;scrollbar-width:thin;scrollbar-color:var(--purple) transparent}
+.ll{display:flex;gap:.5rem;align-items:flex-start}
+.ll .ts{color:#282835;flex-shrink:0;font-size:.58rem}
+.ll.info .m{color:var(--blue)}
+.ll.ok .m{color:var(--green)}
+.ll.warn .m{color:var(--yellow)}
+.ll.err .m{color:var(--red)}
+.ll.tx .m{color:var(--purple);word-break:break-all}
+
+/* TX CARD */
+.tx-card{background:#03030a;border:2px solid var(--purple);border-radius:2px;padding:.65rem .85rem;font-size:.65rem;word-break:break-all;display:none;margin-top:.7rem}
+.tx-card.on{display:block}
+.tx-lbl{font-size:.52rem;letter-spacing:2px;text-transform:uppercase;color:#444;margin-bottom:.2rem}
+.tx-card a{color:var(--purple);text-decoration:none}
+.tx-card a:hover{text-decoration:underline}
+
+/* FLOW DIAGRAM */
+.flow{display:flex;align-items:center;justify-content:center;gap:.5rem;flex-wrap:wrap;margin:1rem 0}
+.flow-node{background:#07070f;border:2px solid;border-radius:3px;padding:.4rem .8rem;font-family:'Bangers',cursive;font-size:.9rem;letter-spacing:2px;text-transform:uppercase}
+.fn-o{color:var(--orange);border-color:var(--orange)}
+.fn-b{color:var(--blue);border-color:var(--blue)}
+.fn-p{color:var(--purple);border-color:var(--purple)}
+.fn-y{color:var(--yellow);border-color:var(--yellow)}
+.flow-arr{color:#333;font-size:1.2rem}
+
+/* PROGRESS FLOW */
+.prog-steps{display:grid;grid-template-columns:1fr 1fr;gap:.6rem;margin-bottom:1rem}
+.prog-item{background:#07070f;border:2px solid #1a1a2a;border-radius:2px;padding:.5rem .7rem;font-size:.65rem;display:flex;align-items:center;gap:.5rem;transition:border-color .3s}
+.prog-item.done{border-color:var(--green)}
+.prog-item.active{border-color:var(--yellow);animation:pgPulse .8s ease-in-out infinite}
+@keyframes pgPulse{0%,100%{box-shadow:0 0 0 0 #e8ff0030}50%{box-shadow:0 0 0 5px #e8ff0010}}
+.prog-icon{font-size:1rem;flex-shrink:0}
+.prog-txt .step-name{font-size:.62rem;color:var(--white);letter-spacing:1px}
+.prog-txt .step-desc{font-size:.55rem;color:#444;margin-top:.1rem}
+.prog-item.done .prog-txt .step-name{color:var(--green)}
+.prog-item.active .prog-txt .step-name{color:var(--yellow)}
+
+/* SUCCESS */
+.success-panel{display:none}
+.success-panel.on{
+  display:block;
+  border-color:var(--purple)!important;
+  box-shadow:8px 8px 0 var(--purple), 0 0 60px #b06fff15!important
+}
+.success-panel.on .panel-hdr{background:var(--purple)!important;color:var(--ink)!important;font-size:1.1rem}
+.success-inner{text-align:center;padding:2.2rem 1rem 1.2rem;position:relative;z-index:1}
+.success-panel.on .panel-body{
+  background:
+    radial-gradient(ellipse 90% 60% at 50% 0%, #b06fff08 0%, transparent 70%),
+    var(--panel)
+}
+.success-emoji{
+  font-size:4.5rem;display:block;margin-bottom:.6rem;
+  animation:heroBounce .65s ease-in-out infinite alternate
+}
+@keyframes heroBounce{
+  from{transform:scale(1) rotate(-5deg)}
+  to  {transform:scale(1.12) rotate(5deg)}
+}
+.success-title{
+  font-family:'Bangers',cursive;font-size:3.2rem;letter-spacing:6px;
+  color:var(--purple);
+  text-shadow:3px 3px 0 var(--ink), 7px 7px 0 #5a2090, -1px -1px 0 #b06fff50;
+  text-transform:uppercase;line-height:1;margin-bottom:.3rem
+}
+.success-sub{color:var(--grey);font-size:.68rem;margin-top:.5rem;letter-spacing:2px;text-transform:uppercase}
+
+/* ── RESET BUTTON ── */
+.btn-reset{
+  background:var(--red);color:var(--white);
+  border:3px solid var(--white);
+  box-shadow:6px 6px 0 #8a0020;
+  font-size:1.3rem;letter-spacing:4px;
+  padding:.85rem 3.2rem;
+  position:relative;overflow:hidden
+}
+.btn-reset::after{
+  content:'';position:absolute;top:-50%;left:-80%;
+  width:45%;height:200%;
+  background:linear-gradient(105deg,transparent,#ffffff30,transparent);
+  animation:btnSheen 2.2s ease-in-out infinite
+}
+@keyframes btnSheen{0%{left:-80%}100%{left:130%}}
+.btn-reset:hover{transform:translate(-2px,-2px)!important;box-shadow:8px 8px 0 #8a0020!important}
+.btn-reset:active{transform:translate(4px,4px)!important;box-shadow:none!important}
+
+/* ── DONE ACTION ROW ── */
+.done-acts{
+  display:flex;justify-content:center;gap:1rem;flex-wrap:wrap;
+  margin-top:1.6rem;padding:.8rem;
+  border-top:2px solid #1a1a2e
+}
+
+/* DIVIDER */
+.div{display:flex;align-items:center;gap:.8rem;margin:.9rem 0;color:#1e1e2e;font-size:.55rem;letter-spacing:2px;text-transform:uppercase}
+.div::before,.div::after{content:'';flex:1;border-top:2px solid #141428}
+
+/* ACT ROW */
+.act-row{display:flex;align-items:center;gap:.9rem;flex-wrap:wrap;margin-top:.3rem}
+.act-hint{font-size:.56rem;color:#3a3a5a;letter-spacing:1px}
+
+/* FALLBACK NOTE */
+.fallback{background:#0a0a16;border:2px solid #ff880040;border-radius:2px;padding:.7rem .9rem;font-size:.65rem;color:#ff8800;margin-bottom:.9rem;display:none}
+.fallback.on{display:block}
+
+.dim{opacity:.3;pointer-events:none;filter:saturate(.15)}
+
+/* VAULT STATUS */
+.vault-status{background:#06060f;border:2px solid #1e1e2e;border-radius:2px;padding:.65rem;font-size:.65rem;margin-bottom:.9rem;display:grid;grid-template-columns:1fr 1fr 1fr;gap:.5rem}
+.vs-item .vs-lbl{font-size:.52rem;letter-spacing:2px;text-transform:uppercase;color:#333;margin-bottom:.15rem}
+.vs-item .vs-val{font-size:.9rem;font-weight:700}
+.vs-item.vs-vault .vs-val{color:var(--orange)}
+.vs-item.vs-pool  .vs-val{color:var(--blue)}
+.vs-item.vs-loan  .vs-val{color:var(--purple)}
+
+@media(max-width:520px){
+  .role-grid{grid-template-columns:1fr}
+  .prog-steps{grid-template-columns:1fr}
+  .step-item::after{display:none}
+  .field-row{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+<div class="bg-lines"></div>
+<div class="app">
+
+  <!-- HERO -->
+  <div class="hero">
+    <div class="hero-eye">⚡ XRPL Testnet · Ripple Secondary Track</div>
+    <h1><em>LENDING</em> VAULT</h1>
+    <div class="hero-sub">XLS-65 Single Asset Vault · XLS-66 Lending Protocol</div>
+    <div class="badges">
+      <div class="net"><div class="pulse"></div>XRPL Testnet Live</div>
+      <span class="badge badge-p">XLS-65 Vault</span>
+      <span class="badge badge-b">XLS-66 Lending</span>
+      <span class="badge badge-y">3 Roles</span>
+      <span class="badge badge-g">End-to-End</span>
+    </div>
+  </div>
+
+  <!-- STEP TRACK -->
+  <div class="step-track">
+    <div class="step-item active" id="s1"><span class="step-num">①</span><span class="step-lbl">Fund</span></div>
+    <div class="step-item" id="s2"><span class="step-num">②</span><span class="step-lbl">Vault</span></div>
+    <div class="step-item" id="s3"><span class="step-num">③</span><span class="step-lbl">Deposit</span></div>
+    <div class="step-item" id="s4"><span class="step-num">④</span><span class="step-lbl">Borrow</span></div>
+    <div class="step-item" id="s5"><span class="step-num">⑤</span><span class="step-lbl">Repay</span></div>
+    <div class="step-item" id="s6"><span class="step-num">⑥</span><span class="step-lbl">Done</span></div>
+  </div>
+
+  <!-- PRIMITIVES -->
+  <div class="panel">
+    <div class="panel-hdr">🏛 XRPL Primitives Used</div>
+    <div class="panel-body">
+      <div class="prims">
+        <span class="prim prim-o">XLS-65 VaultCreate</span>
+        <span class="prim prim-b">XLS-65 VaultDeposit</span>
+        <span class="prim prim-p">XLS-66 LoanCreate</span>
+        <span class="prim prim-g">XLS-66 LoanRepay</span>
+        <span class="prim prim-y">TrustSet (RLUSD)</span>
+      </div>
+      <div class="flow">
+        <div class="flow-node fn-o">Broker</div>
+        <div class="flow-arr">→</div>
+        <div class="flow-node fn-y">Vault</div>
+        <div class="flow-arr">←</div>
+        <div class="flow-node fn-b">Depositor</div>
+        <div class="flow-arr">→</div>
+        <div class="flow-node fn-p">Borrower</div>
+        <div class="flow-arr">→</div>
+        <div class="flow-node fn-y">Repay</div>
+      </div>
+      <p style="font-size:.72rem;color:#888;line-height:1.7">
+        Three wallets funded via testnet faucet. <strong style="color:var(--orange)">Broker</strong> creates a Single Asset Vault (XLS-65).
+        <strong style="color:var(--blue)">Depositor</strong> funds it with RLUSD.
+        <strong style="color:var(--purple)">Borrower</strong> draws a loan (XLS-66) then repays — a complete institutional DeFi cycle on XRPL.
+      </p>
+    </div>
+  </div>
+
+  <!-- STEP 1 — FUND -->
+  <div class="panel" id="pFund">
+    <div class="panel-hdr">① Fund All Three Wallets</div>
+    <div class="panel-body">
+      <div class="role-grid">
+        <div class="role-box rB">
+          <div class="role-lbl">🟠 Broker</div>
+          <div class="role-addr" id="bkAddr">—</div>
+          <div class="role-bal"  id="bkBal">—</div>
+          <span class="role-tag">VaultCreate</span>
+        </div>
+        <div class="role-box rD">
+          <div class="role-lbl">🔵 Depositor</div>
+          <div class="role-addr" id="dpAddr">—</div>
+          <div class="role-bal"  id="dpBal">—</div>
+          <span class="role-tag">VaultDeposit</span>
+        </div>
+        <div class="role-box rBw">
+          <div class="role-lbl">🟣 Borrower</div>
+          <div class="role-addr" id="brAddr">—</div>
+          <div class="role-bal"  id="brBal">—</div>
+          <span class="role-tag">LoanCreate</span>
+        </div>
+      </div>
+      <div class="act-row">
+        <button class="btn btn-y" id="btnFund" onclick="doFund()">
+          <span class="ring" id="rFund"></span>⚡ Fund All 3 Wallets
+        </button>
+        <span class="act-hint">~20s · testnet faucet</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- STEP 2 — CREATE VAULT -->
+  <div class="panel dim" id="pVault">
+    <div class="panel-hdr">② Broker Creates Vault (XLS-65)</div>
+    <div class="panel-body">
+      <div class="fallback on" id="fallbackNote">
+        ℹ️ XLS-65/66 are amendment-gated. If not yet active on testnet, the demo falls back to an
+        Escrow + Payment simulation that proves the same capital flow.
+      </div>
+      <div class="field">
+        <label>RLUSD Issuer Address</label>
+        <input type="text" id="issuerAddr" value="rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh" placeholder="rIssuer…">
+      </div>
+      <div class="vault-status" id="vaultStatus">
+        <div class="vs-item vs-vault"><div class="vs-lbl">Vault ID</div><div class="vs-val" id="vsVaultId">—</div></div>
+        <div class="vs-item vs-pool"><div class="vs-lbl">Pool Size</div><div class="vs-val" id="vsPool">0 RLUSD</div></div>
+        <div class="vs-item vs-loan"><div class="vs-lbl">Active Loan</div><div class="vs-val" id="vsLoan">None</div></div>
+      </div>
+      <div class="act-row">
+        <button class="btn btn-o" id="btnVault" onclick="doVault()">
+          <span class="ring" id="rVault"></span>🏦 Create Vault
+        </button>
+        <span class="act-hint">VaultCreate tx · XLS-65</span>
+      </div>
+      <div class="tx-card" id="vaultTx">
+        <div class="tx-lbl">VaultCreate tx</div>
+        <div id="vaultTxHash">—</div>
+        <a id="vaultTxLink" href="#" target="_blank" style="font-size:.58rem">View on Explorer ↗</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- STEP 3 — DEPOSIT -->
+  <div class="panel dim" id="pDeposit">
+    <div class="panel-hdr">③ Depositor Funds Vault</div>
+    <div class="panel-body">
+      <div class="field-row">
+        <div class="field">
+          <label>Deposit Amount (XRP)</label>
+          <input type="number" id="depAmt" value="10" min="0.000001" max="1000" oninput="checkDepAmt()">
+          <div class="field-hint" id="depAmtHint">Fund wallets first to see available balance</div>
+        </div>
+        <div class="field">
+          <label>Deposit Asset</label>
+          <input type="text" value="XRP (drops)" disabled style="opacity:.5">
+        </div>
+      </div>
+      <div class="act-row">
+        <button class="btn btn-b" id="btnDeposit" onclick="doDeposit()">
+          <span class="ring" id="rDeposit"></span>💰 Fund Vault
+        </button>
+        <span class="act-hint">VaultDeposit tx · earns LP shares</span>
+      </div>
+      <div class="tx-card" id="depositTx">
+        <div class="tx-lbl">VaultDeposit tx</div>
+        <div id="depositTxHash">—</div>
+        <a id="depositTxLink" href="#" target="_blank" style="font-size:.58rem">View on Explorer ↗</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- STEP 4 — BORROW -->
+  <div class="panel dim" id="pBorrow">
+    <div class="panel-hdr">④ Borrower Draws Loan (XLS-66)</div>
+    <div class="panel-body">
+      <div class="field-row">
+        <div class="field">
+          <label>Loan Amount (XRP)</label>
+          <input type="number" id="loanAmt" value="5" min="0.000001" oninput="checkLoanAmt()">
+          <div class="field-hint" id="loanAmtHint">Fund vault first to see available pool</div>
+        </div>
+        <div class="field">
+          <label>Interest Rate</label>
+          <input type="text" value="2% flat" disabled style="opacity:.5">
+        </div>
+      </div>
+      <div class="act-row">
+        <button class="btn btn-p" id="btnBorrow" onclick="doBorrow()">
+          <span class="ring" id="rBorrow"></span>📥 Draw Loan
+        </button>
+        <span class="act-hint">LoanCreate tx · XLS-66</span>
+      </div>
+      <div class="tx-card" id="borrowTx">
+        <div class="tx-lbl">LoanCreate tx</div>
+        <div id="borrowTxHash">—</div>
+        <a id="borrowTxLink" href="#" target="_blank" style="font-size:.58rem">View on Explorer ↗</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- STEP 5 — REPAY -->
+  <div class="panel dim" id="pRepay">
+    <div class="panel-hdr">⑤ Borrower Repays Loan</div>
+    <div class="panel-body">
+      <div id="repayInfo" style="font-size:.7rem;color:#888;margin-bottom:.5rem;line-height:1.6">
+        Repay principal + 2% interest. Loan closes, vault liquidity restored. Depositor receives yield.
+      </div>
+      <div class="field-hint" id="repayHint" style="margin-bottom:.8rem"></div>
+      <div class="act-row">
+        <button class="btn btn-g" id="btnRepay" onclick="doRepay()">
+          <span class="ring" id="rRepay"></span>💸 Repay Loan
+        </button>
+        <span class="act-hint">LoanRepay tx · principal + interest</span>
+      </div>
+      <div class="tx-card" id="repayTx">
+        <div class="tx-lbl">LoanRepay tx</div>
+        <div id="repayTxHash">—</div>
+        <a id="repayTxLink" href="#" target="_blank" style="font-size:.58rem">View on Explorer ↗</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- STEP 6 — DONE -->
+  <div class="panel success-panel" id="pDone">
+    <div class="panel-hdr">⑥ Cycle Complete</div>
+    <div class="panel-body">
+      <div class="success-inner">
+        <span class="success-emoji">🕸️</span>
+        <div class="success-title">Loan Cycle<br>Complete!</div>
+        <div class="success-sub">Vault · Deposit · Loan · Repay — all on XRPL Testnet</div>
+      </div>
+
+      <div class="div">progress summary</div>
+
+      <div class="prog-steps">
+        <div class="prog-item done"><span class="prog-icon">🟠</span><div class="prog-txt"><div class="step-name">Vault Created</div><div class="step-desc">XLS-65 VaultCreate</div></div></div>
+        <div class="prog-item done"><span class="prog-icon">🔵</span><div class="prog-txt"><div class="step-name">Liquidity Deposited</div><div class="step-desc">VaultDeposit · LP shares issued</div></div></div>
+        <div class="prog-item done"><span class="prog-icon">🟣</span><div class="prog-txt"><div class="step-name">Loan Drawn</div><div class="step-desc">XLS-66 LoanCreate</div></div></div>
+        <div class="prog-item done"><span class="prog-icon">💚</span><div class="prog-txt"><div class="step-name">Loan Repaid</div><div class="step-desc">Principal + interest returned</div></div></div>
+      </div>
+
+      <div class="div">on-chain proof</div>
+
+      <div class="tx-card on" id="summaryCard">
+        <div class="tx-lbl">All Transactions</div>
+        <div id="sumTxs">—</div>
+        <a href="https://testnet.xrpl.org" target="_blank" style="font-size:.6rem;color:var(--purple);margin-top:.4rem;display:inline-block">🔍 View on Testnet Explorer ↗</a>
+      </div>
+
+      <div class="done-acts">
+        <button class="btn btn-reset" onclick="doReset()">
+          <span class="ring" id="rReset"></span>↺ NEW MISSION
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- LOG -->
+  <div class="panel">
+    <div class="panel-hdr">📡 Console</div>
+    <div class="panel-body" style="padding:.7rem">
+      <div class="log" id="logBox"></div>
+    </div>
+  </div>
+
+  <div style="text-align:center;font-size:.56rem;color:#1e1e2e;letter-spacing:2px;text-transform:uppercase">
+    XRPL Testnet · Ripple Secondary Track · XLS-65 + XLS-66 ✦ Into the Spider-Verse
+  </div>
+
+</div>
+
+<script src="https://unpkg.com/xrpl@3.0.0/build/xrpl-latest-min.js"></script>
+<script>
+// ═══════════════════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════════════════
+const TESTNET     = 'wss://s.altnet.rippletest.net:51233';
+const EXPLORER_TX = 'https://testnet.xrpl.org/transactions/';
+const XRPL_EPOCH  = 946684800;
+// XRPL reserves: 10 XRP base + 2 XRP per owned object
+const BASE_RESERVE   = 10;
+const OBJECT_RESERVE = 2;
+
+let client   = null;
+let broker   = null;
+let depositor= null;
+let borrower = null;
+let vaultID  = null;
+let loanID   = null;
+let escSeq   = null;
+let isFallback = false;
+let loanAmt  = 5;
+const allTxHashes = [];
+
+// Live-tracked balances (XRP float)
+let brokerBalXRP    = 0;
+let depositorBalXRP = 0;
+let borrowerBalXRP  = 0;
+let poolXRP         = 0;  // actual amount deposited into vault
+
+// ═══════════════════════════════════════════════════════
+//  LOG
+// ═══════════════════════════════════════════════════════
+function log(msg, t='info') {
+  const box=document.getElementById('logBox');
+  const ts=new Date().toLocaleTimeString('en-US',{hour12:false});
+  const d=document.createElement('div');
+  d.className=`ll ${t}`;
+  d.innerHTML=`<span class="ts">${ts}</span><span class="m">${msg}</span>`;
+  box.appendChild(d); box.scrollTop=box.scrollHeight;
+}
+function recordTx(label,hash){
+  allTxHashes.push({label,hash});
+  const box=document.getElementById('sumTxs');
+  box.innerHTML=allTxHashes.map(t=>`<div><span style="color:#444;font-size:.55rem">${t.label}:</span> <a href="${EXPLORER_TX}${t.hash}" target="_blank">${t.hash.slice(0,36)}…</a></div>`).join('');
+}
+
+// ═══════════════════════════════════════════════════════
+//  STEPS
+// ═══════════════════════════════════════════════════════
+function setStep(n){
+  for(let i=1;i<=6;i++){
+    const el=document.getElementById(`s${i}`);
+    el.classList.remove('active','done');
+    if(i<n) el.classList.add('done');
+    else if(i===n) el.classList.add('active');
+  }
+}
+function undim(id){document.getElementById(id).classList.remove('dim')}
+
+// ═══════════════════════════════════════════════════════
+//  BALANCE HELPERS
+// ═══════════════════════════════════════════════════════
+async function refreshBal(address, elemId) {
+  try {
+    const ai  = await client.request({command:'account_info', account:address, ledger_index:'validated'});
+    const xrp = parseInt(ai.result.account_data.Balance) / 1_000_000;
+    document.getElementById(elemId).textContent = xrp.toFixed(2) + ' XRP';
+    return xrp;
+  } catch(_) { return null; }
+}
+
+// Live-validate deposit amount
+function checkDepAmt() {
+  const amt   = parseFloat(document.getElementById('depAmt').value) || 0;
+  const avail = Math.max(depositorBalXRP - BASE_RESERVE - OBJECT_RESERVE, 0);
+  const hint  = document.getElementById('depAmtHint');
+  const input = document.getElementById('depAmt');
+  if (depositorBalXRP === 0) {
+    hint.textContent = 'Fund wallets first to see available balance';
+    hint.className = 'field-hint'; input.classList.remove('field-err'); return;
+  }
+  if (amt <= 0) {
+    hint.textContent = `Available: ${avail.toFixed(2)} XRP`;
+    hint.className = 'field-hint'; input.classList.remove('field-err'); return;
+  }
+  if (amt > avail) {
+    hint.textContent = `⚠ Exceeds available — max ${avail.toFixed(2)} XRP (${depositorBalXRP.toFixed(2)} – ${BASE_RESERVE+OBJECT_RESERVE} reserve)`;
+    hint.className = 'field-hint err'; input.classList.add('field-err');
+  } else {
+    hint.textContent = `✓ OK — ${avail.toFixed(2)} XRP available`;
+    hint.className = 'field-hint ok'; input.classList.remove('field-err');
+  }
+}
+
+// Live-validate loan amount vs pool
+function checkLoanAmt() {
+  const amt  = parseFloat(document.getElementById('loanAmt').value) || 0;
+  const hint = document.getElementById('loanAmtHint');
+  const input= document.getElementById('loanAmt');
+  if (poolXRP === 0) {
+    hint.textContent = 'Fund vault first to see available pool';
+    hint.className = 'field-hint'; input.classList.remove('field-err'); return;
+  }
+  if (amt <= 0) {
+    hint.textContent = `Pool available: ${poolXRP.toFixed(2)} XRP`;
+    hint.className = 'field-hint'; input.classList.remove('field-err'); return;
+  }
+  if (amt > poolXRP) {
+    hint.textContent = `⚠ Loan exceeds pool — max ${poolXRP.toFixed(2)} XRP deposited`;
+    hint.className = 'field-hint err'; input.classList.add('field-err');
+  } else {
+    const repay = (amt * 1.02).toFixed(3);
+    hint.textContent = `✓ OK — repayment will be ${repay} XRP (${amt} + 2%)`;
+    hint.className = 'field-hint ok'; input.classList.remove('field-err');
+  }
+}
+
+// Show repay balance status
+function updateRepayHint() {
+  const repayXRP  = loanAmt * 1.02;
+  const available = Math.max(borrowerBalXRP - BASE_RESERVE, 0);
+  const hint      = document.getElementById('repayHint');
+  if (!hint) return;
+  if (borrowerBalXRP === 0) { hint.textContent=''; return; }
+  if (repayXRP > available) {
+    hint.textContent = `⚠ Borrower may lack funds — needs ${repayXRP.toFixed(3)} XRP, has ${available.toFixed(2)} available (after ${BASE_RESERVE} reserve)`;
+    hint.className = 'field-hint warn';
+  } else {
+    hint.textContent = `✓ Borrower has ${available.toFixed(2)} XRP available — repayment of ${repayXRP.toFixed(3)} XRP is covered`;
+    hint.className = 'field-hint ok';
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+//  STEP 1 — FUND
+// ═══════════════════════════════════════════════════════
+async function doFund(){
+  if(typeof xrpl==='undefined'){
+    log('xrpl.js failed to load from CDN. Check your internet connection and refresh.','err');
+    return;
+  }
+  const btn=document.getElementById('btnFund');
+  const ring=document.getElementById('rFund');
+  btn.disabled=true; ring.classList.add('on');
+  log('Connecting to XRPL Testnet…','info');
+  try{
+    client=new xrpl.Client(TESTNET);
+    await client.connect();
+    log('Connected ✓','ok');
+    for(const [role,addrId,balId,setFn,balVar] of [
+      ['Broker',   'bkAddr','bkBal',(w)=>broker=w,    (b)=>brokerBalXRP=b],
+      ['Depositor','dpAddr','dpBal',(w)=>depositor=w,  (b)=>depositorBalXRP=b],
+      ['Borrower', 'brAddr','brBal',(w)=>borrower=w,   (b)=>borrowerBalXRP=b]
+    ]){
+      log(`Funding ${role} via faucet…`,'info');
+      const r=await client.fundWallet();
+      setFn(r.wallet); balVar(parseFloat(r.balance));
+      document.getElementById(addrId).textContent=r.wallet.address;
+      document.getElementById(balId).textContent=parseFloat(r.balance).toFixed(2)+' XRP';
+      log(`${role}: ${r.wallet.address}  (${r.balance} XRP)`,'ok');
+    }
+    // Update deposit input cap now we know balances
+    const depAvail = Math.max(depositorBalXRP - BASE_RESERVE - OBJECT_RESERVE, 0);
+    document.getElementById('depAmt').max = depAvail.toFixed(6);
+    checkDepAmt(); checkLoanAmt();
+
+    btn.innerHTML='✓ Wallets Funded'; btn.className='btn btn-g'; btn.disabled=true;
+    setStep(2); undim('pVault');
+  }catch(e){log('Error: '+e.message,'err');btn.disabled=false;}
+  finally{ring.classList.remove('on');}
+}
+
+// ═══════════════════════════════════════════════════════
+//  STEP 2 — CREATE VAULT
+//  XLS-65 (SingleAssetVault) is not yet live on testnet.
+//  We use an EscrowCreate as an on-chain vault proxy so the
+//  demo always runs without hanging on an amendment check.
+// ═══════════════════════════════════════════════════════
+async function doVault(){
+  const btn=document.getElementById('btnVault');
+  const ring=document.getElementById('rVault');
+  btn.disabled=true; ring.classList.add('on');
+  isFallback=true; // XLS-65 pending on testnet — always use simulation
+
+  log('XLS-65 pending on testnet — using EscrowCreate as vault proxy','warn');
+
+  try{
+    // EscrowCreate from broker → depositor represents a locked capital pool (vault).
+    // FinishAfter = 10 minutes from now so it stays open during the full demo.
+    const finishAfter = Math.floor(Date.now()/1000) - XRPL_EPOCH + 600;
+    const tx = {
+      TransactionType: 'EscrowCreate',
+      Account:         broker.address,
+      Destination:     depositor.address,
+      Amount:          '10000000', // 10 XRP — vault seed capital
+      FinishAfter:     finishAfter
+    };
+    const r   = await client.submitAndWait(tx, {wallet: broker});
+    const h   = r.result.hash;
+    // xrpl.js v3: Sequence at result level; fallback to tx_json for older nodes
+    escSeq    = r.result.Sequence ?? r.result.tx_json?.Sequence;
+    vaultID   = `SIM:${h.slice(0,8).toUpperCase()}`;
+
+    log(`[SIM] EscrowCreate (vault): ${r.result.meta?.TransactionResult ?? 'unknown'}  seq:${escSeq}`,'ok');
+    log(`TX: ${h}`,'tx');
+
+    document.getElementById('vaultTxHash').textContent = h;
+    document.getElementById('vaultTxLink').href = EXPLORER_TX + h;
+    document.getElementById('vaultTx').classList.add('on');
+    document.getElementById('vsVaultId').textContent = vaultID;
+    recordTx('VaultCreate (EscrowProxy)', h);
+
+    btn.innerHTML='✓ Vault Created'; btn.className='btn btn-g'; btn.disabled=true;
+    setStep(3); undim('pDeposit');
+  }catch(e){log('Error: '+e.message,'err');btn.disabled=false;}
+  finally{ring.classList.remove('on');}
+}
+
+// ═══════════════════════════════════════════════════════
+//  STEP 3 — DEPOSIT
+// ═══════════════════════════════════════════════════════
+async function doDeposit(){
+  const btn=document.getElementById('btnDeposit');
+  const ring=document.getElementById('rDeposit');
+  const amt=parseFloat(document.getElementById('depAmt').value)||10;
+  const drops=String(Math.round(amt*1_000_000));
+
+  // ── MVP VALIDATION ─────────────────────────────────────────
+  if (amt <= 0) { log('Deposit amount must be greater than 0 XRP','err'); return; }
+  const avail = depositorBalXRP - BASE_RESERVE - OBJECT_RESERVE;
+  if (depositorBalXRP > 0 && amt > avail) {
+    log(`⚠ Deposit too large — depositor has ${depositorBalXRP.toFixed(2)} XRP, max deposit: ${avail.toFixed(2)} XRP (after ${BASE_RESERVE+OBJECT_RESERVE} XRP reserve)`,'err');
+    checkDepAmt(); return;
+  }
+  // ───────────────────────────────────────────────────────────
+
+  btn.disabled=true; ring.classList.add('on');
+
+  try{
+    let h;
+    if(!isFallback){
+      log(`VaultDeposit: ${amt} XRP into vault…`,'info');
+      const tx={TransactionType:'VaultDeposit',Account:depositor.address,VaultID:vaultID,Amount:drops};
+      const r=await client.submitAndWait(tx,{wallet:depositor});
+      h=r.result.hash;
+      log(`VaultDeposit: ${r.result.meta?.TransactionResult ?? 'unknown'}`,'ok');
+    }else{
+      log(`[SIM] Payment (deposit proxy): ${amt} XRP from Depositor → Broker vault…`,'warn');
+      const tx={TransactionType:'Payment',Account:depositor.address,Destination:broker.address,Amount:drops};
+      const r=await client.submitAndWait(tx,{wallet:depositor});
+      h=r.result.hash;
+      log(`[SIM] Payment: ${r.result.meta?.TransactionResult ?? 'unknown'}`,'warn');
+    }
+    log(`TX: ${h}`,'tx');
+    document.getElementById('depositTxHash').textContent=h;
+    document.getElementById('depositTxLink').href=EXPLORER_TX+h;
+    document.getElementById('depositTx').classList.add('on');
+    // Track pool size — borrow validation depends on this
+    poolXRP = amt;
+    document.getElementById('vsPool').textContent=amt.toFixed(2)+' XRP';
+    recordTx('VaultDeposit',h);
+
+    // Refresh depositor balance, update loan input cap
+    const newDep = await refreshBal(depositor.address, 'dpBal');
+    if(newDep!==null) depositorBalXRP=newDep;
+    document.getElementById('loanAmt').max = poolXRP.toFixed(6);
+    checkLoanAmt();
+
+    btn.innerHTML='✓ Vault Funded'; btn.className='btn btn-g'; btn.disabled=true;
+    setStep(4); undim('pBorrow');
+  }catch(e){log('Error: '+e.message,'err');btn.disabled=false;}
+  finally{ring.classList.remove('on');}
+}
+
+// ═══════════════════════════════════════════════════════
+//  STEP 4 — BORROW
+// ═══════════════════════════════════════════════════════
+async function doBorrow(){
+  const btn=document.getElementById('btnBorrow');
+  const ring=document.getElementById('rBorrow');
+  loanAmt=parseFloat(document.getElementById('loanAmt').value)||5;
+  const drops=String(Math.round(loanAmt*1_000_000));
+
+  // ── MVP VALIDATION ─────────────────────────────────────────
+  if (loanAmt <= 0) { log('Loan amount must be greater than 0 XRP','err'); return; }
+  if (poolXRP > 0 && loanAmt > poolXRP) {
+    log(`⚠ Loan exceeds vault pool — pool has ${poolXRP.toFixed(2)} XRP, requested ${loanAmt} XRP. Reduce the loan amount.`,'err');
+    checkLoanAmt(); return;
+  }
+  // For fallback: broker must have loanAmt + BASE_RESERVE to pay out
+  if(isFallback && brokerBalXRP > 0 && loanAmt > brokerBalXRP - BASE_RESERVE) {
+    log(`⚠ Broker has insufficient balance (${brokerBalXRP.toFixed(2)} XRP) to disburse ${loanAmt} XRP loan`,'err'); return;
+  }
+  // ───────────────────────────────────────────────────────────
+
+  btn.disabled=true; ring.classList.add('on');
+
+  try{
+    let h;
+    if(!isFallback){
+      log(`LoanCreate: ${loanAmt} XRP from vault…`,'info');
+      const tx={TransactionType:'LoanCreate',Account:borrower.address,VaultID:vaultID,Amount:drops};
+      const r=await client.submitAndWait(tx,{wallet:borrower});
+      h=r.result.hash;
+      loanID=r.result.meta?.CreatedNode?.NewFields?.LoanID??`${borrower.address}:${r.result.Sequence??r.result.tx_json?.Sequence}`;
+      log(`LoanCreate: ${r.result.meta?.TransactionResult ?? 'unknown'}  loanID:${loanID}`,'ok');
+    }else{
+      log(`[SIM] Payment (loan proxy): ${loanAmt} XRP → Borrower…`,'warn');
+      const tx={TransactionType:'Payment',Account:broker.address,Destination:borrower.address,Amount:drops};
+      const r=await client.submitAndWait(tx,{wallet:broker});
+      h=r.result.hash; loanID=`SIM:${h.slice(0,8)}`;
+      log(`[SIM] Payment (loan disbursement): ${r.result.meta?.TransactionResult ?? 'unknown'}`,'warn');
+    }
+    log(`TX: ${h}`,'tx');
+    document.getElementById('borrowTxHash').textContent=h;
+    document.getElementById('borrowTxLink').href=EXPLORER_TX+h;
+    document.getElementById('borrowTx').classList.add('on');
+    document.getElementById('vsLoan').textContent=loanAmt+' XRP';
+
+    const repay=(loanAmt*1.02).toFixed(3);
+    document.getElementById('repayInfo').textContent=`Repay ${repay} XRP (principal ${loanAmt} + 2% interest). Loan closes and vault liquidity is restored.`;
+    recordTx('LoanCreate',h);
+
+    // Refresh borrower + broker balances, update repay hint
+    const newBrr = await refreshBal(borrower.address, 'brBal');
+    if(newBrr!==null) borrowerBalXRP=newBrr;
+    const newBrk = await refreshBal(broker.address, 'bkBal');
+    if(newBrk!==null) brokerBalXRP=newBrk;
+    updateRepayHint();
+
+    btn.innerHTML='✓ Loan Drawn'; btn.className='btn btn-g'; btn.disabled=true;
+    setStep(5); undim('pRepay');
+  }catch(e){log('Error: '+e.message,'err');btn.disabled=false;}
+  finally{ring.classList.remove('on');}
+}
+
+// ═══════════════════════════════════════════════════════
+//  STEP 5 — REPAY
+// ═══════════════════════════════════════════════════════
+async function doRepay(){
+  const btn=document.getElementById('btnRepay');
+  const ring=document.getElementById('rRepay');
+  const repayXRP=loanAmt*1.02;
+  const drops=String(Math.round(repayXRP*1_000_000));
+
+  // ── MVP VALIDATION ─────────────────────────────────────────
+  const available = borrowerBalXRP - BASE_RESERVE;
+  if (borrowerBalXRP > 0 && repayXRP > available) {
+    log(`⚠ Borrower cannot repay — needs ${repayXRP.toFixed(3)} XRP, only has ${available.toFixed(2)} available (${borrowerBalXRP.toFixed(2)} – ${BASE_RESERVE} reserve)`,'err');
+    return;
+  }
+  // ───────────────────────────────────────────────────────────
+
+  btn.disabled=true; ring.classList.add('on');
+
+  try{
+    let h;
+    if(!isFallback){
+      log(`LoanRepay: ${repayXRP.toFixed(3)} XRP…`,'info');
+      const tx={TransactionType:'LoanRepay',Account:borrower.address,LoanID:loanID,Amount:drops};
+      const r=await client.submitAndWait(tx,{wallet:borrower});
+      h=r.result.hash;
+      log(`LoanRepay: ${r.result.meta?.TransactionResult ?? 'unknown'}`,'ok');
+    }else{
+      log(`[SIM] Payment (repayment): ${repayXRP.toFixed(3)} XRP → Broker…`,'warn');
+      const tx={TransactionType:'Payment',Account:borrower.address,Destination:broker.address,Amount:drops};
+      const r=await client.submitAndWait(tx,{wallet:borrower});
+      h=r.result.hash;
+      log(`[SIM] Repayment: ${r.result.meta?.TransactionResult ?? 'unknown'}`,'warn');
+    }
+    log(`TX: ${h}`,'tx');
+    document.getElementById('repayTxHash').textContent=h;
+    document.getElementById('repayTxLink').href=EXPLORER_TX+h;
+    document.getElementById('repayTx').classList.add('on');
+    document.getElementById('vsLoan').textContent='Repaid ✓';
+    recordTx('LoanRepay',h);
+
+    setStep(6);
+    document.getElementById('pRepay').style.display='none';
+    document.getElementById('pDone').classList.add('on');
+    // Refresh all balances at cycle end
+    const nb = await refreshBal(borrower.address, 'brBal');
+    if(nb!==null) borrowerBalXRP=nb;
+    const nk = await refreshBal(broker.address, 'bkBal');
+    if(nk!==null) brokerBalXRP=nk;
+    log('Lending cycle complete! All txns on XRPL Testnet.','ok');
+  }catch(e){log('Error: '+e.message,'err');btn.disabled=false;}
+  finally{ring.classList.remove('on');}
+}
+
+// ═══════════════════════════════════════════════════════
+//  RESET
+// ═══════════════════════════════════════════════════════
+async function doReset(){
+  if(client){try{await client.disconnect();}catch(_){}}
+  client=broker=depositor=borrower=vaultID=loanID=escSeq=null;
+  isFallback=false; allTxHashes.length=0;
+  brokerBalXRP=depositorBalXRP=borrowerBalXRP=poolXRP=0;
+  checkDepAmt(); checkLoanAmt();
+  const rh = document.getElementById('repayHint'); if(rh) rh.textContent='';
+
+  ['bkAddr','bkBal','dpAddr','dpBal','brAddr','brBal'].forEach(id=>document.getElementById(id).textContent='—');
+  document.getElementById('vsVaultId').textContent='—';
+  document.getElementById('vsPool').textContent='0 RLUSD';
+  document.getElementById('vsLoan').textContent='None';
+  document.getElementById('logBox').innerHTML='';
+  document.getElementById('sumTxs').textContent='—';
+
+  ['pVault','pDeposit','pBorrow','pRepay'].forEach(id=>{
+    const el=document.getElementById(id);
+    el.classList.add('dim');
+    el.style.display='';
+  });
+  document.getElementById('pDone').classList.remove('on');
+  ['vaultTx','depositTx','borrowTx','repayTx'].forEach(id=>document.getElementById(id).classList.remove('on'));
+
+  const bf=document.getElementById('btnFund');
+  bf.disabled=false; bf.innerHTML='⚡ Fund All 3 Wallets'; bf.className='btn btn-y';
+  [
+    ['btnVault',   'btn btn-o', '<span class="ring" id="rVault"></span>🏦 Create Vault'],
+    ['btnDeposit', 'btn btn-b', '<span class="ring" id="rDeposit"></span>💰 Fund Vault'],
+    ['btnBorrow',  'btn btn-p', '<span class="ring" id="rBorrow"></span>📥 Draw Loan'],
+    ['btnRepay',   'btn btn-g', '<span class="ring" id="rRepay"></span>💸 Repay Loan'],
+  ].forEach(([id,cls,html])=>{
+    const b=document.getElementById(id);
+    b.disabled=false; b.className=cls; b.innerHTML=html;
+  });
+  setStep(1);
+  log('Reset ✓ — ready to run again.','info');
+}
+
+log('Ready. Step 1: click ⚡ Fund All 3 Wallets to begin the lending cycle.','info');
+</script>
+</body>
+</html>

@@ -38,6 +38,20 @@ dist/
 build/
 out/
 
+# ── Python ───────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+venv/
+.venv/
+
+# ── Autonomous Life Agent secrets ────────────────────────────
+autonomous-life-agent/credentials.json
+autonomous-life-agent/token.json
+autonomous-life-agent/.env
+autonomous-life-agent/logs/
+
 # ── Misc ─────────────────────────────────────────────────────
 *.pid
 *.seed

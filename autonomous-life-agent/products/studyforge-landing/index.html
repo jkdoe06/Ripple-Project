@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StudyForge — AI Study Guides for Berkeley Students</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+            background: #0a0a0a;
+            color: #e0e0e0;
+            line-height: 1.6;
+        }
+        .container { max-width: 800px; margin: 0 auto; padding: 0 24px; }
+
+        /* Hero */
+        .hero {
+            padding: 80px 0 60px;
+            text-align: center;
+        }
+        .hero h1 {
+            font-size: 3rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 16px;
+        }
+        .hero .tagline {
+            font-size: 1.3rem;
+            color: #9ca3af;
+            margin-bottom: 32px;
+        }
+        .hero .badge {
+            display: inline-block;
+            background: rgba(59, 130, 246, 0.15);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            color: #60a5fa;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            margin-bottom: 40px;
+        }
+
+        /* Product Cards */
+        .products {
+            padding: 40px 0;
+        }
+        .products h2 {
+            font-size: 1.8rem;
+            margin-bottom: 32px;
+            text-align: center;
+        }
+        .product-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        @media (max-width: 600px) {
+            .product-grid { grid-template-columns: 1fr; }
+            .hero h1 { font-size: 2rem; }
+        }
+        .product-card {
+            background: #141414;
+            border: 1px solid #2a2a2a;
+            border-radius: 12px;
+            padding: 24px;
+            transition: border-color 0.2s;
+        }
+        .product-card:hover {
+            border-color: #3b82f6;
+        }
+        .product-card .course {
+            font-size: 0.8rem;
+            color: #60a5fa;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 8px;
+        }
+        .product-card h3 {
+            font-size: 1.1rem;
+            margin-bottom: 8px;
+            color: #fff;
+        }
+        .product-card p {
+            font-size: 0.9rem;
+            color: #9ca3af;
+            margin-bottom: 16px;
+        }
+        .product-card .price-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .product-card .price {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: #fff;
+        }
+        .btn {
+            display: inline-block;
+            background: #3b82f6;
+            color: #fff;
+            padding: 10px 20px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: background 0.2s;
+        }
+        .btn:hover { background: #2563eb; }
+        .btn-large {
+            padding: 14px 32px;
+            font-size: 1.1rem;
+        }
+
+        /* Features */
+        .features {
+            padding: 60px 0;
+            text-align: center;
+        }
+        .features h2 { margin-bottom: 40px; font-size: 1.8rem; }
+        .feature-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 24px;
+            text-align: left;
+        }
+        @media (max-width: 600px) {
+            .feature-grid { grid-template-columns: 1fr; }
+        }
+        .feature {
+            background: #141414;
+            border-radius: 12px;
+            padding: 24px;
+        }
+        .feature .icon { font-size: 1.5rem; margin-bottom: 12px; }
+        .feature h3 { font-size: 1rem; margin-bottom: 8px; color: #fff; }
+        .feature p { font-size: 0.85rem; color: #9ca3af; }
+
+        /* CTA */
+        .cta {
+            padding: 60px 0;
+            text-align: center;
+        }
+        .cta h2 { font-size: 1.8rem; margin-bottom: 12px; }
+        .cta p { color: #9ca3af; margin-bottom: 24px; }
+
+        /* Footer */
+        footer {
+            padding: 40px 0;
+            text-align: center;
+            color: #6b7280;
+            font-size: 0.85rem;
+            border-top: 1px solid #1f1f1f;
+        }
+
+        /* Bundle */
+        .bundle {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(139, 92, 246, 0.1));
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            border-radius: 16px;
+            padding: 32px;
+            text-align: center;
+            margin: 40px 0;
+        }
+        .bundle h3 { font-size: 1.4rem; color: #fff; margin-bottom: 8px; }
+        .bundle .original-price {
+            text-decoration: line-through;
+            color: #6b7280;
+            font-size: 1.1rem;
+        }
+        .bundle .bundle-price {
+            font-size: 2rem;
+            font-weight: 800;
+            color: #3b82f6;
+            margin: 8px 0 16px;
+        }
+        .bundle .savings {
+            color: #34d399;
+            font-size: 0.9rem;
+            margin-bottom: 16px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Hero -->
+        <section class="hero">
+            <div class="badge">Made by Berkeley students, for Berkeley students</div>
+            <h1>StudyForge</h1>
+            <p class="tagline">Comprehensive study guides for your exact Berkeley courses.<br>Written by students who aced them.</p>
+        </section>
+
+        <!-- Products -->
+        <section class="products">
+            <h2>Spring 2026 Study Guides</h2>
+
+            <div class="product-grid">
+                <div class="product-card">
+                    <div class="course">Mathematics</div>
+                    <h3>MATH 55 — Discrete Mathematics</h3>
+                    <p>Logic, proofs, combinatorics, graph theory, induction. 10 chapters with worked examples + exam strategy.</p>
+                    <div class="price-row">
+                        <span class="price">$9</span>
+                        <a href="#" class="btn" data-product="math55">Get Guide</a>
+                    </div>
+                </div>
+
+                <div class="product-card">
+                    <div class="course">IEOR</div>
+                    <h3>IEOR 162 — Linear Programming</h3>
+                    <p>Simplex, duality, sensitivity analysis, network flows, integer programming. Complete exam cheat sheet included.</p>
+                    <div class="price-row">
+                        <span class="price">$9</span>
+                        <a href="#" class="btn" data-product="ieor162">Get Guide</a>
+                    </div>
+                </div>
+
+                <div class="product-card">
+                    <div class="course">Business</div>
+                    <h3>UGBA 135 — Personal Finance</h3>
+                    <p>TVM, portfolio theory, CAPM, tax planning, retirement, behavioral finance. All formulas + decision frameworks.</p>
+                    <div class="price-row">
+                        <span class="price">$9</span>
+                        <a href="#" class="btn" data-product="ugba135">Get Guide</a>
+                    </div>
+                </div>
+
+                <div class="product-card">
+                    <div class="course">Reading & Composition</div>
+                    <h3>SCANDIN R5B — Essay Writing</h3>
+                    <p>Thesis templates, close reading method, literary analysis toolkit, essay structure + common feedback fixes.</p>
+                    <div class="price-row">
+                        <span class="price">$7</span>
+                        <a href="#" class="btn" data-product="scandinr5b">Get Guide</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bundle -->
+            <div class="bundle">
+                <h3>All 4 Guides Bundle</h3>
+                <div class="original-price">$34 if bought separately</div>
+                <div class="bundle-price">$19</div>
+                <div class="savings">Save 44%</div>
+                <a href="#" class="btn btn-large" data-product="bundle">Get the Bundle</a>
+            </div>
+        </section>
+
+        <!-- Features -->
+        <section class="features">
+            <h2>Why StudyForge?</h2>
+            <div class="feature-grid">
+                <div class="feature">
+                    <div class="icon">🎯</div>
+                    <h3>Course-Specific</h3>
+                    <p>Written for YOUR exact Berkeley courses with the right depth and focus areas.</p>
+                </div>
+                <div class="feature">
+                    <div class="icon">📝</div>
+                    <h3>Exam-Ready</h3>
+                    <p>Every guide includes exam strategies, common mistakes, and quick-reference cheat sheets.</p>
+                </div>
+                <div class="feature">
+                    <div class="icon">⚡</div>
+                    <h3>Instant Access</h3>
+                    <p>Download immediately after purchase. Study tonight.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- CTA -->
+        <section class="cta">
+            <h2>Stop cramming. Start understanding.</h2>
+            <p>Join Berkeley students who study smarter.</p>
+            <a href="#" class="btn btn-large">Browse All Guides</a>
+        </section>
+
+        <footer>
+            <p>StudyForge &copy; 2026. Made with care at UC Berkeley.</p>
+        </footer>
+    </div>
+
+    <script>
+        // Replace these with your actual Gumroad product URLs after setup
+        const PRODUCT_URLS = {
+            'math55': 'https://your-gumroad.gumroad.com/l/math55',
+            'ieor162': 'https://your-gumroad.gumroad.com/l/ieor162',
+            'ugba135': 'https://your-gumroad.gumroad.com/l/ugba135',
+            'scandinr5b': 'https://your-gumroad.gumroad.com/l/scandinr5b',
+            'bundle': 'https://your-gumroad.gumroad.com/l/berkeley-bundle',
+        };
+
+        document.querySelectorAll('[data-product]').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.preventDefault();
+                const product = btn.dataset.product;
+                const url = PRODUCT_URLS[product];
+                if (url && !url.includes('your-gumroad')) {
+                    window.open(url, '_blank');
+                } else {
+                    alert('Set up your Gumroad links in the script section of index.html!');
+                }
+            });
+        });
+    </script>
+</body>
+</html>

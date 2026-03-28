@@ -1,0 +1,218 @@
+{
+  "$schema": "https://openclaw.ai/schemas/config.json",
+  "comment": "Autonomous Life Agent — OpenClaw Configuration",
+
+  "gateway": {
+    "port": 18789,
+    "bind": "127.0.0.1",
+    "auth": {
+      "mode": "password",
+      "password": "${OPENCLAW_GATEWAY_PASSWORD}"
+    },
+    "tailscale": {
+      "mode": "off"
+    }
+  },
+
+  "agent": {
+    "model": "claude-sonnet-4-6",
+    "thinkingLevel": "high",
+    "systemPrompt": "You are an autonomous life management agent for a UC Berkeley undergrad. You manage Gmail, Calendar, Canvas, and income opportunities. Always verify before acting. Never delete protected content. Log everything.",
+    "elevated": false
+  },
+
+  "security": {
+    "sandbox": {
+      "enabled": true,
+      "mode": "docker",
+      "image": "node:24-slim",
+      "volumes": [
+        "./:/app:rw",
+        "./logs:/app/logs:rw"
+      ],
+      "networkPolicy": "restricted",
+      "readOnlyRootFs": false
+    },
+
+    "permissions": {
+      "commandAllowlist": [
+        "gog",
+        "curl",
+        "python3",
+        "pip",
+        "node",
+        "npm",
+        "git",
+        "ls",
+        "cat",
+        "head",
+        "tail",
+        "grep",
+        "jq",
+        "echo",
+        "date",
+        "whoami",
+        "which"
+      ],
+      "commandBlocklist": [
+        "rm -rf",
+        "sudo",
+        "chmod 777",
+        "dd",
+        "mkfs",
+        "shutdown",
+        "reboot",
+        "kill -9",
+        "pkill",
+        "passwd",
+        "useradd"
+      ],
+      "fileSystemBoundary": "./",
+      "blockPaths": [
+        "~/.ssh",
+        "~/.gnupg",
+        "~/.aws",
+        "~/.config",
+        "/etc",
+        "/var"
+      ]
+    },
+
+    "humanInTheLoop": {
+      "enabled": true,
+      "requireApprovalFor": [
+        "financial_transaction",
+        "account_creation",
+        "email_send",
+        "file_delete",
+        "calendar_delete",
+        "purchase",
+        "domain_registration"
+      ],
+      "approvalChannel": "telegram",
+      "approvalTimeout": 300,
+      "autoApprove": [
+        "email_label",
+        "email_trash_junk",
+        "calendar_color_update",
+        "calendar_reminder_add",
+        "canvas_read",
+        "price_scan",
+        "earnings_log"
+      ]
+    },
+
+    "trustedSenders": {
+      "dmPolicy": "pairing",
+      "allowedUsers": []
+    },
+
+    "skillSecurity": {
+      "scanWithVirusTotal": true,
+      "onlyAllowCurated": true,
+      "blockUnverifiedSkills": true
+    }
+  },
+
+  "workspace": {
+    "root": "./",
+    "skills": "./skills",
+    "logs": "./logs"
+  },
+
+  "skills": {
+    "load": {
+      "dirs": ["./skills"],
+      "extraDirs": []
+    }
+  },
+
+  "channels": {
+    "telegram": {
+      "enabled": false,
+      "token": "${TELEGRAM_BOT_TOKEN}",
+      "dmPolicy": "pairing",
+      "allowFrom": []
+    },
+    "whatsapp": {
+      "enabled": false
+    },
+    "webchat": {
+      "enabled": true
+    }
+  },
+
+  "cron": [
+    {
+      "name": "Gmail Organizer",
+      "schedule": "0 */3 * * *",
+      "message": "Run /gmail-organizer",
+      "session": "main",
+      "enabled": true
+    },
+    {
+      "name": "Calendar Organize",
+      "schedule": "0 */6 * * *",
+      "message": "Run /calendar-manager organize",
+      "session": "main",
+      "enabled": true
+    },
+    {
+      "name": "Canvas Sync",
+      "schedule": "0 8,20 * * *",
+      "message": "Run /canvas-sync",
+      "session": "main",
+      "enabled": true
+    },
+    {
+      "name": "Money Engine Scan",
+      "schedule": "0 9 * * *",
+      "message": "Run /money-engine scan",
+      "session": "main",
+      "enabled": true
+    },
+    {
+      "name": "Price Monitor",
+      "schedule": "0 */2 * * *",
+      "message": "Run price scanner: python3 ./tools/price_scanner.py --categories all",
+      "session": "main",
+      "enabled": true
+    },
+    {
+      "name": "Domain Scout",
+      "schedule": "0 10 * * *",
+      "message": "Run domain scout: python3 ./tools/domain_scout.py scan",
+      "session": "main",
+      "enabled": true
+    },
+    {
+      "name": "Earnings Report (Weekly)",
+      "schedule": "0 18 * * 0",
+      "message": "Run earnings report: python3 ./tools/earnings_tracker.py report",
+      "session": "main",
+      "enabled": true
+    },
+    {
+      "name": "Canvas Urgent Check",
+      "schedule": "0 */4 * * *",
+      "message": "Check Canvas for assignments due within 48 hours",
+      "session": "main",
+      "enabled": true
+    },
+    {
+      "name": "Morning Briefing",
+      "schedule": "0 7 * * 1-5",
+      "message": "Give me a morning briefing: today's calendar events, urgent emails, pending deadlines, and any money opportunities found overnight",
+      "session": "main",
+      "enabled": true
+    }
+  ],
+
+  "env": {
+    "GOG_ACCOUNT": "${GOG_ACCOUNT}",
+    "CANVAS_API_TOKEN": "${CANVAS_API_TOKEN}",
+    "CANVAS_API_URL": "https://bcourses.berkeley.edu/api/v1",
+    "GUMROAD_ACCESS_TOKEN": "${GUMROAD_ACCESS_TOKEN}",
+    "STRIPE_API_KEY": "${STRIPE_API_KEY}"
+  }
+}

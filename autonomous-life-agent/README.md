@@ -1,171 +1,278 @@
 # Autonomous Life Agent
 
-> **4-module agentic system** that organizes your Gmail, Google Calendar, Canvas LMS, and scouts income opportunities — all running autonomously with human-in-the-loop approval gates.
+> **OpenClaw-powered agentic system** that organizes your Gmail, Google Calendar, Canvas LMS, and autonomously scouts + executes income opportunities — running 24/7 with safety guardrails.
+
+Built on [OpenClaw](https://openclaw.ai/) (247K+ GitHub stars). Uses SKILL.md agent skills, `gog` CLI for Google Workspace, Canvas REST API, and autonomous Python tools for money-making.
 
 ---
 
 ## Architecture
 
 ```
-main.py (Orchestrator)
-  ├── Module 1: GmailAgent
-  │   └── Auto-label, trash junk, star professional, flag unreplied
-  ├── Module 2: CalendarAgent
-  │   └── Create calendars, set colors, add reminders, detect conflicts
-  ├── Module 3: CanvasAgent
-  │   └── Pull assignments, sync to Calendar, flag urgent deadlines
-  └── Module 4: OpportunityAgent
-      └── Search freelance gigs, evaluate arbitrage strategies, rank by ROI
+OpenClaw Gateway (ws://127.0.0.1:18789)
+  │
+  ├── Skill: gmail-organizer     → Auto-label, trash junk, star, flag unreplied
+  ├── Skill: calendar-manager    → Create/color calendars, reminders, conflicts
+  ├── Skill: canvas-sync         → Pull assignments → Calendar events
+  ├── Skill: money-engine        → Arbitrage scanner, freelance, passive income
+  │
+  ├── Tools (Python)
+  │   ├── earnings_tracker.py    → Track every dollar earned
+  │   ├── price_scanner.py       → Monitor arbitrage price differentials
+  │   ├── domain_scout.py        → Find & manage domain investments
+  │   ├── gumroad_manager.py     → Sell digital products autonomously
+  │   └── stripe_manager.py      → Collect payments via Stripe
+  │
+  ├── Cron Jobs (9 automated tasks)
+  │   ├── Gmail organize         → every 3 hours
+  │   ├── Calendar organize      → every 6 hours
+  │   ├── Canvas sync            → 8am + 8pm daily
+  │   ├── Money scan             → 9am daily
+  │   ├── Price monitor          → every 2 hours
+  │   ├── Domain scout           → 10am daily
+  │   ├── Earnings report        → Sunday 6pm
+  │   ├── Urgent deadline check  → every 4 hours
+  │   └── Morning briefing       → 7am weekdays
+  │
+  └── Security
+      ├── Docker sandbox (non-root)
+      ├── Command allowlist/blocklist
+      ├── Human-in-the-loop for financial actions
+      ├── File system boundaries
+      └── VirusTotal skill scanning
 ```
 
-Each module follows the **audit → plan → approve → execute → report** lifecycle.
+---
 
 ## Quick Start
 
-### 1. Install Dependencies
+### 1. Install OpenClaw
+
+```bash
+npm install -g openclaw@latest
+openclaw onboard --install-daemon
+```
+
+### 2. Install Google Workspace CLI (gog)
+
+```bash
+brew install steipete/tap/gogcli
+gog auth login --scopes gmail,calendar
+```
+
+### 3. Install Python Tools
 
 ```bash
 cd autonomous-life-agent
 pip install -r requirements.txt
 ```
 
-### 2. Set Up Google OAuth2
-
-1. Go to [Google Cloud Console](https://console.cloud.google.com/)
-2. Create a project (or use existing)
-3. Enable **Gmail API** and **Google Calendar API**
-4. Go to **APIs & Services → Credentials**
-5. Create **OAuth 2.0 Client ID** (type: Desktop App)
-6. Download the JSON file
-7. Save it as `credentials.json` in this directory
-
-### 3. Set Up Canvas API Token
-
-1. Go to [bCourses](https://bcourses.berkeley.edu)
-2. Navigate to **Account → Settings → New Access Token**
-3. Copy the token
-4. Create a `.env` file:
+### 4. Configure Credentials
 
 ```bash
 cp .env.example .env
-# Edit .env and paste your Canvas token
+# Edit .env with your tokens:
+#   GOG_ACCOUNT, CANVAS_API_TOKEN, GUMROAD_ACCESS_TOKEN,
+#   STRIPE_API_KEY, OPENCLAW_GATEWAY_PASSWORD
 ```
 
-### 4. Run
+### 5. Run
 
 ```bash
-# Interactive mode — approve each module before execution
+# Option A: Direct (development)
+openclaw gateway --port 18789 --verbose
+
+# Option B: Docker (production, recommended for safety)
+docker compose up -d
+
+# Option C: Python orchestrator (standalone, no OpenClaw needed)
 python main.py
-
-# Auto-approve all modules
-python main.py --auto
-
-# Run only one module
-python main.py --module gmail
-python main.py --module calendar
-python main.py --module canvas
-python main.py --module opportunity
-
-# Preview mode — see what would happen without making changes
-python main.py --dry-run
+python main.py --dry-run     # Preview mode
+python main.py --module gmail # Single module
 ```
 
-## Modules
+---
 
-### Module 1: Gmail Agent
+## Skills (OpenClaw SKILL.md)
 
-| Action | Description |
-|--------|-------------|
-| **Auto-label** | Classifies emails into 7 categories: Travel, Finance, School & Greek Life, Jobs & Internships, Housing, Professional, Social |
-| **Auto-trash** | Removes emails from 13 known junk senders (Babbel, Walgreens, Ryanair, etc.) |
-| **Star** | Stars professional emails from real humans (not noreply/automated) |
-| **Flag** | Flags emails needing a response after 48 hours without reply |
-| **Protect** | Never deletes emails from VIP senders (amaris.charton@gmail.com, sigmachi.org, berkeley.edu, delta.com, booking.com) |
-
-### Module 2: Calendar Agent
+### `/gmail-organizer` — Gmail Agent
 
 | Action | Description |
 |--------|-------------|
-| **Create calendars** | Professional (Basil) and Travel (Sage) |
-| **Update colors** | Class calendars → Blueberry, FUN!! → Flamingo, Family → Sage, Primary/Holidays → Graphite |
-| **Reminders** | Adds 15-min popup reminders to all class events |
-| **Categorize** | Auto-moves events to Professional/Travel calendars by keywords |
-| **Conflicts** | Detects and flags overlapping events |
+| Auto-label | 7 categories: Travel, Finance, School & Greek Life, Jobs & Internships, Housing, Professional, Social |
+| Auto-trash | 13 junk sender domains |
+| Star | Professional emails from real humans |
+| Flag | Unreplied emails after 48 hours |
+| Protect | VIP senders: amaris.charton@gmail.com, sigmachi.org, berkeley.edu, delta.com, booking.com |
 
-### Module 3: Canvas Agent
-
-| Action | Description |
-|--------|-------------|
-| **Sync courses** | SCANDIN R5B, MATH 55, INDENG 162, UGBA 135 |
-| **Pull assignments** | All upcoming assignments, due dates, exams |
-| **Create events** | Adds missing deadlines to Google Calendar (Blueberry) |
-| **Reminders** | 1 week, 3 days, 1 day, 1 hour before each deadline |
-| **Urgent alerts** | Flags anything due within 48 hours |
-
-### Module 4: Opportunity Scout + Arbitrage Agent
+### `/calendar-manager` — Calendar Agent
 
 | Action | Description |
 |--------|-------------|
-| **Web search** | Scans for freelance gigs, research studies, tutoring, beta testing |
-| **Profile matching** | Scores opportunities against your skills/interests |
-| **Arbitrage strategies** | Evaluates 7 real-world buy-low-sell-high strategies |
-| **Top picks** | Textbook flipping, wine arbitrage, digital products, domain flipping, event tickets |
-| **Safety** | Never auto-executes — presents findings for manual review |
+| Create | Professional (Basil) + Travel (Sage) calendars |
+| Colors | Classes → Blueberry, FUN!! → Flamingo, Family → Sage, Primary/Holidays → Graphite |
+| Reminders | 15-min popup on all class events |
+| Categorize | Auto-move events by keywords (Professional, Travel, School, Fun, Family) |
+| Conflicts | Detect and flag overlapping events |
+| Weekly view | `/calendar-manager week` for formatted weekly summary |
+| Quick add | `/calendar-manager add <description>` for natural language event creation |
 
-## Safety & Rules
+### `/canvas-sync` — Canvas Agent
 
-- Every action is logged to `logs/audit_YYYYMMDD.log`
-- **Never deletes** emails from real humans or financial/travel confirmations
-- **Never auto-creates** accounts on third-party platforms
-- **Approval gates** before each module executes (unless `--auto`)
-- **Dry run mode** available (`--dry-run`) to preview all actions
-- Retries failed API calls up to 3 times with exponential backoff
-- Uncertain emails are skipped and flagged for manual review
+| Action | Description |
+|--------|-------------|
+| Courses | SCANDIN R5B, MATH 55, INDENG 162, UGBA 135 |
+| Sync | Pull all upcoming assignments → create Google Calendar events |
+| Color | All academic deadlines → Blueberry (colorId 9) |
+| Reminders | 1 week, 3 days, 1 day, 1 hour before each deadline |
+| Urgent | Flag anything due within 48 hours |
+
+### `/money-engine` — Money Engine (12 Strategies)
+
+#### Arbitrage Opportunities
+
+| # | Strategy | Margin | Startup | Risk |
+|---|----------|--------|---------|------|
+| 1 | Textbook Arbitrage | 200-500% | $20-50 | Very low |
+| 2 | Wine Arbitrage (Travel) | 100-800% | $10-50/bottle | Low |
+| 3 | Japanese Electronics/Collectibles | 50-700% | $50-200 | Low-Med |
+| 4 | Concert/Event Tickets | 30-200% | $50-500 | Medium |
+| 5 | Thrift Store/Estate Sale Flips | 100-1000% | $10-50 | Low |
+| 6 | Domain Name Flipping | 500-10000% | $8-50 | Medium |
+| 7 | Sneaker/Streetwear | 30-300% | $100-300 | Med-High |
+
+#### Passive/Active Income
+
+| # | Strategy | Rate | Effort |
+|---|----------|------|--------|
+| 8 | Course Notes & Study Guides (Gumroad) | $5-15/sale | Create once, sell forever |
+| 9 | Micro-Freelancing (Upwork/Fiverr) | $25-100/hr | Per project |
+| 10 | Paid Research Studies | $15-300/study | 1-2 hrs each |
+| 11 | Print-on-Demand | $5-15/sale | Upload once |
+| 12 | Crypto Airdrop Farming | $0-10,000+ | Speculative |
+
+#### Autonomous Execution Tools
+
+| Tool | What It Does |
+|------|-------------|
+| `earnings_tracker.py` | Logs every dollar, categorizes, generates reports |
+| `price_scanner.py` | Monitors 6 markets for arbitrage differentials every 2 hours |
+| `domain_scout.py` | Finds trending domains, checks availability, manages portfolio |
+| `gumroad_manager.py` | Creates/manages digital product listings, tracks sales |
+| `stripe_manager.py` | Creates payment links, tracks revenue, checks balance |
+
+---
+
+## Security Guardrails
+
+This system implements all 5 layers of OpenClaw safety:
+
+### 1. Environment Sandboxing
+- Docker container with non-root user (`agent`)
+- Read-only skill mounting
+- Restricted tmpfs
+- `no-new-privileges` security option
+
+### 2. Permissions & Access Controls
+- **Command allowlist**: only `gog`, `curl`, `python3`, `git`, `jq`, etc.
+- **Command blocklist**: `rm -rf`, `sudo`, `chmod 777`, `shutdown`, etc.
+- **File system boundary**: locked to project directory
+- **Blocked paths**: `~/.ssh`, `~/.gnupg`, `~/.aws`, `/etc`, `/var`
+
+### 3. Human-in-the-Loop (HITL)
+Actions requiring approval (via Telegram/WhatsApp):
+- Financial transactions
+- Account creation
+- Sending emails
+- File deletion
+- Domain registration
+- Purchases
+
+Auto-approved (safe actions):
+- Email labeling, junk trashing
+- Calendar color updates, reminder adds
+- Canvas reads
+- Price scanning
+- Earnings logging
+
+### 4. Skill Security
+- VirusTotal scanning enabled
+- Only curated skills allowed
+- Unverified skills blocked
+
+### 5. Network Hardening
+- Gateway bound to `127.0.0.1` (localhost only)
+- Password authentication required
+- Tailscale recommended for remote access
+
+---
 
 ## Project Structure
 
 ```
 autonomous-life-agent/
-├── main.py                    # Orchestrator — entry point
+├── openclaw.json              # OpenClaw config (gateway, security, cron)
+├── Dockerfile                 # Docker sandbox
+├── docker-compose.yml         # Production deployment
+├── main.py                    # Standalone Python orchestrator
 ├── requirements.txt           # Python dependencies
-├── .env.example               # Template for credentials
-├── credentials.json           # (you provide) Google OAuth2
-├── token.json                 # (auto-generated) OAuth token cache
+├── .env.example               # Credential template
+│
+├── skills/                    # OpenClaw SKILL.md agents
+│   ├── gmail-organizer/
+│   │   └── SKILL.md
+│   ├── calendar-manager/
+│   │   └── SKILL.md
+│   ├── canvas-sync/
+│   │   └── SKILL.md
+│   └── money-engine/
+│       └── SKILL.md
+│
+├── agents/                    # Python agent modules (standalone mode)
+│   ├── base_agent.py
+│   ├── gmail_agent.py
+│   ├── calendar_agent.py
+│   ├── canvas_agent.py
+│   └── opportunity_agent.py
+│
+├── tools/                     # Autonomous execution tools
+│   ├── earnings_tracker.py
+│   ├── price_scanner.py
+│   ├── domain_scout.py
+│   ├── gumroad_manager.py
+│   └── stripe_manager.py
+│
+├── auth/                      # Authentication handlers
+│   ├── google_auth.py
+│   └── canvas_auth.py
 │
 ├── config/
-│   └── settings.py            # All rules, labels, colors, keywords
-│
-├── auth/
-│   ├── google_auth.py         # Google OAuth2 flow
-│   └── canvas_auth.py         # Canvas API token handler
-│
-├── agents/
-│   ├── base_agent.py          # Base class: audit → plan → execute
-│   ├── gmail_agent.py         # Module 1: Gmail organization
-│   ├── calendar_agent.py      # Module 2: Calendar management
-│   ├── canvas_agent.py        # Module 3: Canvas → Calendar sync
-│   └── opportunity_agent.py   # Module 4: Income opportunity scout
+│   └── settings.py            # Centralized configuration
 │
 ├── utils/
-│   ├── logger.py              # Audit logging (console + file)
-│   └── retry.py               # Exponential backoff decorator
+│   ├── logger.py              # Audit logging
+│   └── retry.py               # Exponential backoff
 │
-└── logs/                      # Audit logs and reports
+└── logs/                      # Audit logs, reports, earnings
     ├── audit_YYYYMMDD.log
-    └── report_YYYYMMDD_HHMMSS.json
+    ├── earnings.json
+    ├── price_scan.json
+    ├── domain_portfolio.json
+    └── report_*.json
 ```
 
-## Configuration
+---
 
-All rules are centralized in `config/settings.py`:
+## Two Modes of Operation
 
-- **GMAIL_LABELS** — Label categories and classification keywords
-- **AUTO_TRASH_SENDERS** — Domains to auto-trash
-- **PROTECTED_SENDERS** — Domains/addresses to never delete
-- **CALENDAR_COLORS** — Calendar → colorId mapping
-- **CANVAS_COURSES** — Courses to sync from Canvas
-- **OPPORTUNITY_SEARCH_TERMS** — Web search queries
-- **ARBITRAGE_STRATEGIES** — Buy-low-sell-high opportunity database
+| Mode | How | Best For |
+|------|-----|----------|
+| **OpenClaw** | `openclaw gateway` or `docker compose up` | Full autonomous 24/7 operation with cron, multi-channel messaging, HITL |
+| **Standalone Python** | `python main.py` | Quick runs, testing, no OpenClaw dependency |
+
+Both modes use the same underlying logic and configuration.
+
+---
 
 ## License
 

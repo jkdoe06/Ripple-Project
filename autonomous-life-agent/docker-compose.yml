@@ -1,0 +1,29 @@
+version: "3.9"
+
+services:
+  life-agent:
+    build: .
+    container_name: autonomous-life-agent
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:18789:18789"  # Bind to localhost ONLY
+    volumes:
+      - ./logs:/home/agent/app/logs
+      - ./skills:/home/agent/app/skills:ro  # Skills are read-only in container
+    env_file:
+      - .env
+    environment:
+      - NODE_ENV=production
+      - OPENCLAW_GATEWAY_PASSWORD=${OPENCLAW_GATEWAY_PASSWORD}
+    security_opt:
+      - no-new-privileges:true
+    read_only: false
+    tmpfs:
+      - /tmp:size=100M
+    networks:
+      - agent-net
+
+networks:
+  agent-net:
+    driver: bridge
+    internal: false  # Needs internet for APIs

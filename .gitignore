@@ -52,6 +52,10 @@ autonomous-life-agent/token.json
 autonomous-life-agent/.env
 autonomous-life-agent/logs/
 
+# ── Arbitrage Bot secrets ────────────────────────────────────
+autonomous-life-agent/arbitrage-bot/.env
+autonomous-life-agent/arbitrage-bot/logs/
+
 # ── Misc ─────────────────────────────────────────────────────
 *.pid
 *.seed
